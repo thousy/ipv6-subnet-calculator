@@ -1,0 +1,21 @@
+# Local backups and exported copies
+*.bak
+* - 副本.html
+IPv6 子网计算工具V*.HTML
+
+# Old WebView2 packaging artifacts
+Launcher.cs
+Microsoft.Web.WebView2*.dll
+WebView2Loader.dll
+IPv6SubnetCalculator.exe.WebView2/
+
+# Build/compiler temporary files
+*.TMP
+*.tmp
+bin/
+obj/
+
+# OS/editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
