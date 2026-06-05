@@ -16,7 +16,7 @@
 下载并双击运行：
 
 ```text
-IPv6SubnetCalculatorV1.2.exe
+IPv6SubnetCalculatorV1.2.2.exe
 ```
 
 当前 EXE 是单文件原生 Windows 窗口版，不需要随附 HTML、WebView2 DLL 或其它资源文件。
@@ -32,13 +32,13 @@ IPv6SubnetCalculatorV1.2.exe
 ## 发布建议
 
 - GitHub Pages：使用根目录的 `index.html` 作为 Web 入口。
-- GitHub Releases：上传 `IPv6SubnetCalculatorV1.2.exe` 作为 Windows 下载文件。
+- GitHub Releases：上传 `IPv6SubnetCalculatorV1.2.2.exe` 作为 Windows 下载文件。
 
 ## 开发文件
 
 - `index.html`：GitHub Pages 入口页。
 - `IPv6新版界面.html`：新版 Web 界面。
-- `IPv6 子网计算工具V1.2.HTML`：最新 V1.2 版 Web 界面。
+- `IPv6 子网计算工具V1.2.2.HTML`：最新 V1.2.2 版 Web 界面。
 - `IPv6传统桌面界面.html`：传统桌面风格 Web 界面。
 - `PortableCalculator.cs`：EXE 原生窗口版源码。
-- `IPv6SubnetCalculatorV1.2.exe`：已编译的 Windows 单文件版本（V1.2）。
+- `IPv6SubnetCalculatorV1.2.2.exe`：已编译的 Windows 单文件版本（V1.2.2）。

@@ -132,11 +132,11 @@
       box-shadow: none;
     }
 
-    .main-grid fieldset:nth-child(2) {
+    .results-card {
       padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fff;
     }
 
     legend {
@@ -146,23 +146,24 @@
       font-size: 15px;
     }
 
-    .main-grid fieldset:nth-child(2) legend {
+    .results-title {
       display: block;
       width: 100%;
       padding: 14px 16px 10px;
-      border: 1px solid var(--line);
-      border-bottom: 0;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 15px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
       border-radius: 4px 4px 0 0;
       background: #fff;
     }
 
     .binary-result-box {
       padding: 0 16px 14px;
-      border: 1px solid var(--line);
-      border-top: 0;
-      border-radius: 0 0 4px 4px;
-      background: #fff;
-      margin-bottom: 8px;
+      border: 0;
+      background: transparent;
+      margin-bottom: 0;
     }
 
     .green {
@@ -595,8 +596,8 @@
           <div id="error" class="error" role="status"></div>
         </fieldset>
 
-        <fieldset>
-          <legend>结果</legend>
+        <div class="results-card">
+          <div class="results-title">结果</div>
           <div class="binary-result-box">
             <div class="result-row">
               <div class="green">主机地址：</div>
@@ -611,51 +612,52 @@
               <div id="networkBinary" class="binary red"></div>
             </div>
           </div>
-          <div class="subnet-info-box">
-            <div class="result-row">
-              <div class="green">当前子网地址：</div>
-              <div id="networkFull" class="blue mono"></div>
-            </div>
+        </div>
 
-            <div class="hint"><span class="dot"></span><span>当前子网地址起始到结束</span></div>
-
-            <div class="result-row">
-              <div class="green">范围起始：</div>
-              <div id="rangeStart" class="blue mono"></div>
-            </div>
-            <div class="result-row">
-              <div class="green">范围结束：</div>
-              <div id="rangeEnd" class="blue mono"></div>
-            </div>
-            <div class="result-row">
-              <div class="green">地址数量：</div>
-              <div id="totalCount" class="blue mono"></div>
-            </div>
+        <div class="subnet-info-box">
+          <div class="result-row">
+            <div class="green">当前子网地址：</div>
+            <div id="networkFull" class="blue mono"></div>
           </div>
 
-          <div class="subnet-info-box">
-            <div class="result-row">
-              <div class="green">下个子网地址：</div>
-              <div id="nextNetworkFull" class="blue mono"></div>
-            </div>
+          <div class="hint"><span class="dot"></span><span>当前子网地址起始到结束</span></div>
 
-            <div class="hint"><span class="dot"></span><span>下个子网当前子网地址起始到结束</span></div>
-
-            <div class="result-row">
-              <div class="green">下个子网起始：</div>
-              <div id="nextRangeStart" class="blue mono"></div>
-            </div>
-            <div class="result-row">
-              <div class="green">下个子网结束：</div>
-              <div id="nextRangeEnd" class="blue mono"></div>
-            </div>
-
-            <div class="result-row">
-              <div class="green">地址数量：</div>
-              <div id="nextTotalCount" class="blue mono"></div>
-            </div>
+          <div class="result-row">
+            <div class="green">范围起始：</div>
+            <div id="rangeStart" class="blue mono"></div>
           </div>
-        </fieldset>
+          <div class="result-row">
+            <div class="green">范围结束：</div>
+            <div id="rangeEnd" class="blue mono"></div>
+          </div>
+          <div class="result-row">
+            <div class="green">地址数量：</div>
+            <div id="totalCount" class="blue mono"></div>
+          </div>
+        </div>
+
+        <div class="subnet-info-box">
+          <div class="result-row">
+            <div class="green">下个子网地址：</div>
+            <div id="nextNetworkFull" class="blue mono"></div>
+          </div>
+
+          <div class="hint"><span class="dot"></span><span>下个子网当前子网地址起始到结束</span></div>
+
+          <div class="result-row">
+            <div class="green">下个子网起始：</div>
+            <div id="nextRangeStart" class="blue mono"></div>
+          </div>
+          <div class="result-row">
+            <div class="green">下个子网结束：</div>
+            <div id="nextRangeEnd" class="blue mono"></div>
+          </div>
+
+          <div class="result-row">
+            <div class="green">地址数量：</div>
+            <div id="nextTotalCount" class="blue mono"></div>
+          </div>
+        </div>
       </div>
 
       <section class="convert" aria-label="IPv6压缩扩展">

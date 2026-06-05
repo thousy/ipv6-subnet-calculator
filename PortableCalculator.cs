@@ -84,7 +84,7 @@ internal sealed class IPv6CalculatorForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "YouQian IPv6 子网计算工具  V1.2",
+            Text = "YouQian IPv6 子网计算工具  V1.2.2",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font(Font.FontFamily, 13F, FontStyle.Bold)
