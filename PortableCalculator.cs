@@ -121,8 +121,8 @@ internal sealed class IPv6CalculatorForm : Form
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
-        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 88));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 94));
+        panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 94));
         panel.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         panel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
@@ -526,12 +526,12 @@ internal sealed class IPv6CalculatorForm : Form
 
     private static Control RangeSummary(string caption, Label start, Label end)
     {
-        var outer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
+        var outer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = new Padding(0) };
         outer.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         outer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         outer.Controls.Add(GreenLabel(caption), 0, 0);
 
-        var rows = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 3 };
+        var rows = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 3, Margin = new Padding(0) };
         rows.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 22));
         rows.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         rows.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 30));
@@ -591,8 +591,22 @@ internal sealed class IPv6CalculatorForm : Form
 
     private static Button CopyButton(Control source)
     {
-        var button = new Button { Text = "⧉", Width = 26, Height = 24, FlatStyle = FlatStyle.Flat, BackColor = Color.White, ForeColor = Accent(), Margin = new Padding(0) };
+        var button = new Button
+        {
+            Text = "\uE8C8",
+            Font = new Font("Segoe MDL2 Assets", 9F),
+            Width = 26,
+            Height = 24,
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.White,
+            ForeColor = Accent(),
+            Margin = new Padding(0)
+        };
         button.FlatAppearance.BorderColor = Color.FromArgb(217, 222, 231);
+
+        var tt = new ToolTip();
+        tt.SetToolTip(button, "复制");
+
         button.Click += delegate
         {
             string text = source.Text;
