@@ -82,25 +82,13 @@ internal sealed class IPv6CalculatorForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 172));
         Controls.Add(root);
 
-        var headerPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Margin = new Padding(0), RowCount = 1 };
-        headerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
-        headerPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
-        headerPanel.Controls.Add(new Label
+        root.Controls.Add(new Label
         {
             Text = "YouQian IPv6 子网计算工具  V1.2",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font(Font.FontFamily, 13F, FontStyle.Bold)
         }, 0, 0);
-        headerPanel.Controls.Add(new Label
-        {
-            Text = "YouQian Tech",
-            Dock = DockStyle.Fill,
-            TextAlign = ContentAlignment.MiddleRight,
-            ForeColor = Color.FromArgb(91, 100, 114),
-            Font = new Font(Font.FontFamily, 11F, FontStyle.Regular)
-        }, 1, 0);
-        root.Controls.Add(headerPanel, 0, 0);
 
         root.Controls.Add(new Label
         {
