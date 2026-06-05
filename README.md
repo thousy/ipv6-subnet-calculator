@@ -6,7 +6,10 @@
 
 ### Web 版本
 
-直接打开 `index.html`，或发布到 GitHub Pages 后在浏览器中访问。
+发布到 GitHub Pages 后，可从入口页选择：
+
+- `IPv6新版界面.html`
+- `IPv6传统桌面界面.html`
 
 ### Windows EXE 版本
 
@@ -33,7 +36,9 @@ IPv6SubnetCalculator.exe
 
 ## 开发文件
 
-- `index.html`：Web 发布入口。
-- `INDEX2.HTML`：Web 版本副本。
+- `index.html`：GitHub Pages 入口页。
+- `IPv6新版界面.html`：新版 Web 界面。
+- `IPv6 子网计算工具V1.2.HTML`：最新 V1.2 版 Web 界面。
+- `IPv6传统桌面界面.html`：传统桌面风格 Web 界面。
 - `PortableCalculator.cs`：EXE 原生窗口版源码。
-- `IPv6SubnetCalculator.exe`：已编译的 Windows 单文件版本。
+- `IPv6SubnetCalculator.exe`：已编译的 Windows 单文件版本（V1.2）。

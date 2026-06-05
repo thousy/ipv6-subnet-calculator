@@ -84,7 +84,7 @@ internal sealed class IPv6CalculatorForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "IPv6 子网计算工具  V1.1",
+            Text = "IPv6 子网计算工具  V1.2",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font(Font.FontFamily, 13F, FontStyle.Bold)
@@ -246,10 +246,10 @@ internal sealed class IPv6CalculatorForm : Form
             box.TextChanged += delegate { if (!updating) UpdateHostFromHextets(); };
         }
 
-        compressedInput.TextChanged += delegate { if (!updating) compressedBottom.Text = compressedInput.Text; };
-        compressedBottom.TextChanged += delegate { if (!updating) compressedInput.Text = compressedBottom.Text; };
-        expandedInput.TextChanged += delegate { if (!updating) expandedBottom.Text = expandedInput.Text; };
-        expandedBottom.TextChanged += delegate { if (!updating) expandedInput.Text = expandedBottom.Text; };
+        compressedInput.TextChanged += delegate { if (!updating) compressedBottom.Text = compressedInput.Text.ToLower(); };
+        compressedBottom.TextChanged += delegate { if (!updating) compressedInput.Text = compressedBottom.Text.ToLower(); };
+        expandedInput.TextChanged += delegate { if (!updating) expandedBottom.Text = expandedInput.Text.ToLower(); };
+        expandedBottom.TextChanged += delegate { if (!updating) expandedInput.Text = expandedBottom.Text.ToLower(); };
     }
 
     private void Calculate()
@@ -272,7 +272,7 @@ internal sealed class IPv6CalculatorForm : Form
             ushort[] nextStartParts = nextStartValue.HasValue ? BigToParts(nextStartValue.Value) : null;
             ushort[] nextEndParts = nextEndValue.HasValue ? BigToParts(nextEndValue.Value) : null;
 
-            for (int i = 0; i < 8; i++) hextets[i].Text = hostParts[i].ToString("X4");
+            for (int i = 0; i < 8; i++) hextets[i].Text = hostParts[i].ToString("x4");
 
             maskBits.Text = prefix.ToString(CultureInfo.InvariantCulture);
             hostCompact.Text = Compress(hostParts);
@@ -327,7 +327,7 @@ internal sealed class IPv6CalculatorForm : Form
             string[] parts = hextets.Select(t => string.IsNullOrWhiteSpace(t.Text) ? "0" : t.Text.Trim()).ToArray();
             if (parts.Any(p => p.Length > 4 || !p.All(Uri.IsHexDigit)))
             {
-                errorLabel.Text = "IPv6地址段只能输入0-FFFF";
+                errorLabel.Text = "IPv6地址段只能输入0-ffff";
                 return;
             }
 
@@ -429,7 +429,7 @@ internal sealed class IPv6CalculatorForm : Form
 
     private static string Expanded(ushort[] parts)
     {
-        return string.Join(":", parts.Select(p => p.ToString("X4")));
+        return string.Join(":", parts.Select(p => p.ToString("x4")));
     }
 
     private static string Compress(ushort[] parts)
@@ -449,9 +449,9 @@ internal sealed class IPv6CalculatorForm : Form
             i = j;
         }
 
-        if (bestStart < 0) return string.Join(":", parts.Select(p => p.ToString("X")));
-        string before = string.Join(":", parts.Take(bestStart).Select(p => p.ToString("X")));
-        string after = string.Join(":", parts.Skip(bestStart + bestLen).Select(p => p.ToString("X")));
+        if (bestStart < 0) return string.Join(":", parts.Select(p => p.ToString("x")));
+        string before = string.Join(":", parts.Take(bestStart).Select(p => p.ToString("x")));
+        string after = string.Join(":", parts.Skip(bestStart + bestLen).Select(p => p.ToString("x")));
         if (before.Length == 0 && after.Length == 0) return "::";
         if (before.Length == 0) return "::" + after;
         if (after.Length == 0) return before + "::";
