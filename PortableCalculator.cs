@@ -57,6 +57,15 @@ internal sealed class IPv6CalculatorForm : Form
         Font = new Font("Microsoft YaHei UI", 9F);
         BackColor = Color.White;
 
+        try
+        {
+            if (System.IO.File.Exists("ipv6_pixel_grid_with_6_icon.ico"))
+            {
+                this.Icon = new Icon("ipv6_pixel_grid_with_6_icon.ico");
+            }
+        }
+        catch { }
+
         BuildUi();
         WireEvents();
 
@@ -84,7 +93,7 @@ internal sealed class IPv6CalculatorForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "YouQian IPv6 子网计算工具  V1.2.2",
+            Text = "YouQian IPv6 子网计算工具  V1.2.3",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font(Font.FontFamily, 13F, FontStyle.Bold)
