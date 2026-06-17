@@ -200,7 +200,7 @@ internal sealed class IPv6CalculatorForm : Form
 
         var exportBtn = new Button
         {
-            Text = "导出当前子网可用地址",
+            Text = "导出当前子网可用地址（EXCEL表格）",
             Width = 580,
             Height = 32,
             BackColor = Color.FromArgb(0, 136, 200),
@@ -224,7 +224,7 @@ internal sealed class IPv6CalculatorForm : Form
 
         var exportNextBtn = new Button
         {
-            Text = "导出下个子网可用地址",
+            Text = "导出下个子网可用地址（EXCEL表格）",
             Width = 580,
             Height = 32,
             BackColor = Color.FromArgb(0, 136, 200),
