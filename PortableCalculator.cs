@@ -1,9 +1,13 @@
 using System;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Numerics;
+using System.Reflection;
+using System.Text;
 using System.Windows.Forms;
 
 internal static class PortableProgram
@@ -93,7 +97,7 @@ internal sealed class IPv6CalculatorForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "YouQian IPv6 子网计算工具  V1.2.4",
+            Text = "YouQian IPv6 子网计算工具  V1.2.5",
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
             Font = new Font(Font.FontFamily, 13F, FontStyle.Bold)
@@ -194,14 +198,43 @@ internal sealed class IPv6CalculatorForm : Form
             ResultRow("子网地址：", networkBinary, null, 610)
         }, 610));
 
+        var exportBtn = new Button
+        {
+            Text = "导出当前子网可用地址",
+            Width = 580,
+            Height = 32,
+            BackColor = Color.FromArgb(0, 136, 200),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 8, 0, 0),
+            Font = new Font(Font.FontFamily, 9F, FontStyle.Bold)
+        };
+        exportBtn.FlatAppearance.BorderSize = 0;
+        exportBtn.Click += ExportClick;
+
         panel.Controls.Add(Box(new Control[]
         {
             ResultRow("当前子网地址：", networkFull, networkFull, 610),
             Hint("当前子网地址起始到结束", 610),
             ResultRow("范围起始：", rangeStart, rangeStart, 610),
             ResultRow("范围结束：", rangeEnd, rangeEnd, 610),
-            ResultRow("地址数量：", totalCount, null, 610)
+            ResultRow("地址数量：", totalCount, null, 610),
+            exportBtn
         }, 610));
+
+        var exportNextBtn = new Button
+        {
+            Text = "导出下个子网可用地址",
+            Width = 580,
+            Height = 32,
+            BackColor = Color.FromArgb(0, 136, 200),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 8, 0, 0),
+            Font = new Font(Font.FontFamily, 9F, FontStyle.Bold)
+        };
+        exportNextBtn.FlatAppearance.BorderSize = 0;
+        exportNextBtn.Click += ExportNextClick;
 
         panel.Controls.Add(Box(new Control[]
         {
@@ -209,7 +242,8 @@ internal sealed class IPv6CalculatorForm : Form
             Hint("下个子网当前子网地址起始到结束", 610),
             ResultRow("下个子网起始：", nextRangeStart, nextRangeStart, 610),
             ResultRow("下个子网结束：", nextRangeEnd, nextRangeEnd, 610),
-            ResultRow("地址数量：", nextTotalCount, null, 610)
+            ResultRow("地址数量：", nextTotalCount, null, 610),
+            exportNextBtn
         }, 610));
 
         return panel;
@@ -327,6 +361,261 @@ internal sealed class IPv6CalculatorForm : Form
         {
             updating = false;
         }
+    }
+
+    private void ExportClick(object sender, EventArgs e)
+    {
+        DoExport(false);
+    }
+
+    private void ExportNextClick(object sender, EventArgs e)
+    {
+        DoExport(true);
+    }
+
+    private void DoExport(bool isNext)
+    {
+        try
+        {
+            int prefix = (int)prefixNumber.Value;
+            ushort[] hostParts;
+            try
+            {
+                hostParts = ParseIPv6(hostInput.Text);
+            }
+            catch
+            {
+                MessageBox.Show("请先输入有效的主机IPv6地址", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            BigInteger hostValue = PartsToBig(hostParts);
+            BigInteger maskValue = PrefixMask(prefix);
+            BigInteger networkValue = hostValue & maskValue;
+            BigInteger endValue = networkValue | (Max128() ^ maskValue);
+
+            if (isNext)
+            {
+                if (endValue == Max128())
+                {
+                    MessageBox.Show("已到达 IPv6 地址空间尽头，无下个子网，无法导出。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                networkValue = endValue + 1;
+                endValue = networkValue | (Max128() ^ maskValue);
+            }
+
+            BigInteger totalCountVal = endValue - networkValue + 1;
+
+            int exportLimit = 65536;
+            if (totalCountVal > exportLimit)
+            {
+                string subName = isNext ? "下个子网" : "当前子网";
+                var dr = MessageBox.Show(
+                    string.Format("{0}包含的地址数量为 {1}。\n由于 Excel 行数限制以及性能原因，本次导出将仅生成前 {2} 个地址。\n是否继续导出？", subName, totalCountVal, exportLimit),
+                    "导出确认",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning
+                );
+                if (dr != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                exportLimit = (int)totalCountVal;
+            }
+
+            string compressSubnetStr = Compress(BigToParts(networkValue)).ToLower() + "_" + prefix;
+            string fileName = compressSubnetStr.Replace(":", "_") + ".xlsx";
+
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "Excel 文件 (*.xlsx)|*.xlsx";
+                sfd.FileName = fileName;
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    byte[] templateBytes = GetTemplateBytes();
+                    if (templateBytes == null) return;
+
+                    File.WriteAllBytes(sfd.FileName, templateBytes);
+
+                    string sheetXml = GenerateSheetXml(networkValue, prefix, exportLimit);
+
+                    using (var archive = ZipFile.Open(sfd.FileName, ZipArchiveMode.Update))
+                    {
+                        var entry = archive.GetEntry("xl/worksheets/sheet1.xml");
+                        if (entry != null)
+                        {
+                            entry.Delete();
+                        }
+                        var newEntry = archive.CreateEntry("xl/worksheets/sheet1.xml");
+                        using (var writer = new StreamWriter(newEntry.Open(), Encoding.UTF8))
+                        {
+                            writer.Write(sheetXml);
+                        }
+                    }
+
+                    MessageBox.Show("导出成功！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("导出失败：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private byte[] GetTemplateBytes()
+    {
+        try
+        {
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("moban.xlsx"))
+            {
+                if (stream != null)
+                {
+                    byte[] bytes = new byte[stream.Length];
+                    stream.Read(bytes, 0, bytes.Length);
+                    return bytes;
+                }
+            }
+        }
+        catch { }
+
+        if (File.Exists("moban.xlsx"))
+        {
+            return File.ReadAllBytes("moban.xlsx");
+        }
+
+        MessageBox.Show("未找到 Excel 模板资源或文件 moban.xlsx，请确保它存在于程序当前目录中。", "导出错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        return null;
+    }
+
+    private string GenerateSheetXml(BigInteger networkValue, int prefix, int exportLimit)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n");
+        sb.Append("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac xr xr2 xr3\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\" xr:uid=\"{6B43EABC-031E-4A80-9AA0-A25C094EC4A3}\">");
+        sb.AppendFormat("<dimension ref=\"A1:D{0}\"/>", 8 + exportLimit);
+        sb.Append("<sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection activeCell=\"D9\" sqref=\"D9\"/></sheetView></sheetViews>");
+        sb.Append("<sheetFormatPr defaultColWidth=\"9\" defaultRowHeight=\"14.25\" x14ac:dyDescent=\"0.2\"/>");
+        sb.Append("<cols>");
+        sb.Append("<col min=\"1\" max=\"1\" width=\"18.75\" customWidth=\"1\"/>");
+        sb.Append("<col min=\"2\" max=\"2\" width=\"11.25\" customWidth=\"1\"/>");
+        sb.Append("<col min=\"3\" max=\"3\" width=\"48.25\" customWidth=\"1\"/>");
+        sb.Append("<col min=\"4\" max=\"4\" width=\"50.625\" customWidth=\"1\"/>");
+        sb.Append("</cols>");
+        sb.Append("<sheetData>");
+
+        string fullSubnetStr = Expanded(BigToParts(networkValue)).ToUpper() + "/" + prefix;
+        string compressSubnetStr = Compress(BigToParts(networkValue)).ToLower() + "/" + prefix;
+
+        // 计算可用范围
+        BigInteger maskValue = PrefixMask(prefix);
+        BigInteger endValue = networkValue | (Max128() ^ maskValue);
+        string rangeStartFull = Expanded(BigToParts(networkValue)).ToUpper();
+        string rangeEndFull = Expanded(BigToParts(endValue)).ToUpper();
+        string rangeStartCompress = Compress(BigToParts(networkValue)).ToLower();
+        string rangeEndCompress = Compress(BigToParts(endValue)).ToLower();
+
+        // Row 1 (所属VLAN | VLAN 300)
+        sb.Append("<row r=\"1\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A1\" s=\"9\" t=\"inlineStr\"><is><t>所属VLAN</t></is></c>");
+        sb.Append("<c r=\"B1\" s=\"8\"/>");
+        sb.Append("<c r=\"C1\" s=\"5\" t=\"inlineStr\"><is><t>VLAN 300</t></is></c>");
+        sb.Append("<c r=\"D1\" s=\"3\"/>");
+        sb.Append("</row>");
+
+        // Row 2 (IPv4段)
+        sb.Append("<row r=\"2\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A2\" s=\"8\" t=\"inlineStr\"><is><t>IPv4段</t></is></c>");
+        sb.Append("<c r=\"B2\" s=\"8\"/>");
+        sb.Append("<c r=\"C2\" s=\"5\" t=\"inlineStr\"><is><t>IPv4:192.168.1.0/24</t></is></c>");
+        sb.Append("<c r=\"D2\" s=\"4\"/>");
+        sb.Append("</row>");
+
+        // Row 3 (IPv4地址池)
+        sb.Append("<row r=\"3\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A3\" s=\"8\" t=\"inlineStr\"><is><t>IPv4地址池</t></is></c>");
+        sb.Append("<c r=\"B3\" s=\"8\"/>");
+        sb.Append("<c r=\"C3\" s=\"5\" t=\"inlineStr\"><is><t>192.168.1.1-192.168.1.254</t></is></c>");
+        sb.Append("<c r=\"D3\" s=\"4\"/>");
+        sb.Append("</row>");
+
+        // Row 4 (IPv4网关)
+        sb.Append("<row r=\"4\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A4\" s=\"8\" t=\"inlineStr\"><is><t>IPv4网关</t></is></c>");
+        sb.Append("<c r=\"B4\" s=\"8\"/>");
+        sb.Append("<c r=\"C4\" s=\"5\" t=\"inlineStr\"><is><t>192.168.1.254</t></is></c>");
+        sb.Append("<c r=\"D4\" s=\"4\"/>");
+        sb.Append("</row>");
+
+        // Row 5 (IPv6段)
+        sb.Append("<row r=\"5\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A5\" s=\"9\" t=\"inlineStr\"><is><t>IPv6段</t></is></c>");
+        sb.Append("<c r=\"B5\" s=\"8\"/>");
+        sb.AppendFormat("<c r=\"C5\" s=\"5\" t=\"inlineStr\"><is><t>{0}</t></is></c>", fullSubnetStr);
+        sb.AppendFormat("<c r=\"D5\" s=\"5\" t=\"inlineStr\"><is><t>{0}</t></is></c>", compressSubnetStr);
+        sb.Append("</row>");
+
+        // Row 6 (新增：IPv6可用范围)
+        sb.Append("<row r=\"6\" spans=\"1:4\" ht=\"33\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A6\" s=\"9\" t=\"inlineStr\"><is><t>IPv6可用范围</t></is></c>");
+        sb.Append("<c r=\"B6\" s=\"8\"/>");
+        sb.AppendFormat("<c r=\"C6\" s=\"5\" t=\"inlineStr\"><is><t xml:space=\"preserve\">从【{0}】&#10;到【{1}】</t></is></c>", rangeStartFull, rangeEndFull);
+        sb.AppendFormat("<c r=\"D6\" s=\"5\" t=\"inlineStr\"><is><t xml:space=\"preserve\">从【{0}】&#10;到【{1}】</t></is></c>", rangeStartCompress, rangeEndCompress);
+        sb.Append("</row>");
+
+        // Row 7 (IPv6网关)
+        sb.Append("<row r=\"7\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A7\" s=\"8\" t=\"inlineStr\"><is><t>IPv6网关</t></is></c>");
+        sb.Append("<c r=\"B7\" s=\"8\"/>");
+        sb.Append("<c r=\"C7\" s=\"5\"/>");
+        sb.Append("<c r=\"D7\" s=\"4\"/>");
+        sb.Append("</row>");
+
+        // Row 8 (Header)
+        sb.Append("<row r=\"8\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A8\" s=\"2\" t=\"inlineStr\"><is><t>IPV4地址</t></is></c>");
+        sb.Append("<c r=\"B8\" s=\"6\" t=\"inlineStr\"><is><t>后一位</t></is></c>");
+        sb.Append("<c r=\"C8\" s=\"6\" t=\"inlineStr\"><is><t>完整IPV6 (大写)</t></is></c>");
+        sb.Append("<c r=\"D8\" s=\"7\" t=\"inlineStr\"><is><t>压缩版IPV6 (小写)</t></is></c>");
+        sb.Append("</row>");
+
+        BigInteger current = networkValue;
+        for (int i = 0; i < exportLimit; i++)
+        {
+            int rowNum = 9 + i;
+            ushort[] parts = BigToParts(current);
+            string ipFull = Expanded(parts).ToUpper() + "/" + prefix;
+            string ipCompress = Compress(parts).ToLower() + "/" + prefix;
+            int lastByte = (int)(current & 0xFF);
+
+            sb.AppendFormat("<row r=\"{0}\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">", rowNum);
+            sb.AppendFormat("<c r=\"A{0}\" s=\"1\" t=\"inlineStr\"><is><t>/</t></is></c>", rowNum);
+            sb.AppendFormat("<c r=\"B{0}\" s=\"1\"><v>{1}</v></c>", rowNum, lastByte);
+            sb.AppendFormat("<c r=\"C{0}\" s=\"5\" t=\"inlineStr\"><is><t>{1}</t></is></c>", rowNum, ipFull);
+            sb.AppendFormat("<c r=\"D{0}\" s=\"1\" t=\"inlineStr\"><is><t>{1}</t></is></c>", rowNum, ipCompress);
+            sb.Append("</row>");
+
+            current += 1;
+        }
+
+        sb.Append("</sheetData>");
+        sb.Append("<mergeCells count=\"7\">");
+        sb.Append("<mergeCell ref=\"A7:B7\"/>");
+        sb.Append("<mergeCell ref=\"A1:B1\"/>");
+        sb.Append("<mergeCell ref=\"A2:B2\"/>");
+        sb.Append("<mergeCell ref=\"A3:B3\"/>");
+        sb.Append("<mergeCell ref=\"A4:B4\"/>");
+        sb.Append("<mergeCell ref=\"A5:B5\"/>");
+        sb.Append("<mergeCell ref=\"A6:B6\"/>");
+        sb.Append("</mergeCells>");
+        sb.Append("<pageMargins left=\"0.75\" right=\"0.75\" top=\"1\" bottom=\"1\" header=\"0.5\" footer=\"0.5\"/>");
+        sb.Append("</worksheet>");
+
+        return sb.ToString();
     }
 
     private void UpdateHostFromHextets()
