@@ -1192,7 +1192,8 @@
           return;
         }
 
-        const zip = await JSZip.loadAsync(mobanBase64, { base64: true });
+        const cleanBase64 = mobanBase64.replace(/[^A-Za-z0-9+/=]/g, "");
+        const zip = await JSZip.loadAsync(cleanBase64, { base64: true });
         const sheetXml = generateSheetXml(networkValue, prefix, exportLimit);
         zip.file("xl/worksheets/sheet1.xml", sheetXml);
 
