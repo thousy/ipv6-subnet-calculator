@@ -497,7 +497,7 @@ internal sealed class IPv6CalculatorForm : Form
         var sb = new StringBuilder();
         sb.Append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n");
         sb.Append("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac xr xr2 xr3\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\" xr:uid=\"{6B43EABC-031E-4A80-9AA0-A25C094EC4A3}\">");
-        sb.AppendFormat("<dimension ref=\"A1:D{0}\"/>", 8 + exportLimit);
+        sb.AppendFormat("<dimension ref=\"A1:D{0}\"/>", 9 + exportLimit);
         sb.Append("<sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><selection activeCell=\"D9\" sqref=\"D9\"/></sheetView></sheetViews>");
         sb.Append("<sheetFormatPr defaultColWidth=\"9\" defaultRowHeight=\"14.25\" x14ac:dyDescent=\"0.2\"/>");
         sb.Append("<cols>");
@@ -567,26 +567,34 @@ internal sealed class IPv6CalculatorForm : Form
         sb.AppendFormat("<c r=\"D6\" s=\"5\" t=\"inlineStr\"><is><t xml:space=\"preserve\">从【{0}】&#10;到【{1}】</t></is></c>", rangeStartCompress, rangeEndCompress);
         sb.Append("</row>");
 
-        // Row 7 (IPv6网关)
+        // Row 7 (当前子网IPv6地址数量)
         sb.Append("<row r=\"7\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
-        sb.Append("<c r=\"A7\" s=\"8\" t=\"inlineStr\"><is><t>IPv6网关</t></is></c>");
+        sb.Append("<c r=\"A7\" s=\"9\" t=\"inlineStr\"><is><t>当前子网IPv6地址数量</t></is></c>");
         sb.Append("<c r=\"B7\" s=\"8\"/>");
-        sb.Append("<c r=\"C7\" s=\"5\"/>");
-        sb.Append("<c r=\"D7\" s=\"4\"/>");
+        sb.AppendFormat("<c r=\"C7\" s=\"5\" t=\"inlineStr\"><is><t>{0}</t></is></c>", CountText(prefix));
+        sb.Append("<c r=\"D7\" s=\"5\"/>");
         sb.Append("</row>");
 
-        // Row 8 (Header)
+        // Row 8 (IPv6网关)
         sb.Append("<row r=\"8\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
-        sb.Append("<c r=\"A8\" s=\"2\" t=\"inlineStr\"><is><t>IPV4地址</t></is></c>");
-        sb.Append("<c r=\"B8\" s=\"6\" t=\"inlineStr\"><is><t>后一位</t></is></c>");
-        sb.Append("<c r=\"C8\" s=\"6\" t=\"inlineStr\"><is><t>完整IPV6 (大写)</t></is></c>");
-        sb.Append("<c r=\"D8\" s=\"7\" t=\"inlineStr\"><is><t>压缩版IPV6 (小写)</t></is></c>");
+        sb.Append("<c r=\"A8\" s=\"8\" t=\"inlineStr\"><is><t>IPv6网关</t></is></c>");
+        sb.Append("<c r=\"B8\" s=\"8\"/>");
+        sb.Append("<c r=\"C8\" s=\"5\"/>");
+        sb.Append("<c r=\"D8\" s=\"4\"/>");
+        sb.Append("</row>");
+
+        // Row 9 (Header)
+        sb.Append("<row r=\"9\" spans=\"1:4\" ht=\"24\" customHeight=\"1\" x14ac:dyDescent=\"0.2\">");
+        sb.Append("<c r=\"A9\" s=\"2\" t=\"inlineStr\"><is><t>IPV4地址</t></is></c>");
+        sb.Append("<c r=\"B9\" s=\"6\" t=\"inlineStr\"><is><t>后一位</t></is></c>");
+        sb.Append("<c r=\"C9\" s=\"6\" t=\"inlineStr\"><is><t>完整IPV6 (大写)</t></is></c>");
+        sb.Append("<c r=\"D9\" s=\"7\" t=\"inlineStr\"><is><t>压缩版IPV6 (小写)</t></is></c>");
         sb.Append("</row>");
 
         BigInteger current = networkValue;
         for (int i = 0; i < exportLimit; i++)
         {
-            int rowNum = 9 + i;
+            int rowNum = 10 + i;
             ushort[] parts = BigToParts(current);
             string ipFull = Expanded(parts).ToUpper() + "/" + prefix;
             string ipCompress = Compress(parts).ToLower() + "/" + prefix;
@@ -603,14 +611,15 @@ internal sealed class IPv6CalculatorForm : Form
         }
 
         sb.Append("</sheetData>");
-        sb.Append("<mergeCells count=\"7\">");
-        sb.Append("<mergeCell ref=\"A7:B7\"/>");
+        sb.Append("<mergeCells count=\"8\">");
         sb.Append("<mergeCell ref=\"A1:B1\"/>");
         sb.Append("<mergeCell ref=\"A2:B2\"/>");
         sb.Append("<mergeCell ref=\"A3:B3\"/>");
         sb.Append("<mergeCell ref=\"A4:B4\"/>");
         sb.Append("<mergeCell ref=\"A5:B5\"/>");
         sb.Append("<mergeCell ref=\"A6:B6\"/>");
+        sb.Append("<mergeCell ref=\"A7:B7\"/>");
+        sb.Append("<mergeCell ref=\"A8:B8\"/>");
         sb.Append("</mergeCells>");
         sb.Append("<pageMargins left=\"0.75\" right=\"0.75\" top=\"1\" bottom=\"1\" header=\"0.5\" footer=\"0.5\"/>");
         sb.Append("</worksheet>");
